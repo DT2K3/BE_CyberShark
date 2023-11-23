@@ -46,7 +46,7 @@ namespace BE_CyberShark.Controllers
             }
             catch (ArgumentException ex)
             {
-                return BadRequest("Login failed: " + ex.Message);
+                return BadRequest(new { error = "Login failed", message = ex.Message });
             }
         }
 

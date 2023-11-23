@@ -1,5 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using BE_cybershark.Models;
 using BE_cybershark.Models.BE_cybershark.Models;
@@ -17,7 +18,7 @@ namespace BE_CyberShark.Repositories
         public UserRepository(CyberSharkContext context, IConfiguration config)
         {
             _context = context;
-            //inject config into Repo
+            //inject config into Repo (jwt seret inside)
             _config = config;
         }
 
@@ -68,33 +69,54 @@ namespace BE_CyberShark.Repositories
             }
 
             // Đăng nhập thất bại
-            throw new Exception("Wrong email or password");
+            throw new ArgumentException("Incorrect email or password. Please try again.");
         }
+
 
         public string GenerateJwtToken(User user)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JwtSettings:SecretKey"] ?? ""));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            try
+            {
+                var key = GenerateSecurityKey();
+                var tokenHandler = new JwtSecurityTokenHandler();
 
-            var claims = new List<Claim>
+                var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email)
-            // Thêm các thông tin khác nếu cần
+            // Add other claims as needed
         };
 
-            var tokenDescription = new SecurityTokenDescriptor
+                var tokenDescriptor = new SecurityTokenDescriptor
+                {
+                    Subject = new ClaimsIdentity(claims),
+                    Expires = DateTime.UtcNow.AddDays(30),
+                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
+                };
+
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                var jwtToken = tokenHandler.WriteToken(token);
+
+                return jwtToken;
+            }
+            catch (Exception ex)
             {
-                Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddDays(30), // Thời hạn của token là 30 ngày
-                SigningCredentials = credentials
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescription);
-
-            return tokenHandler.WriteToken(token);
+                // Log or handle the exception as needed
+                throw new Exception("Error generating JWT token", ex);
+            }
         }
+
+        private byte[] GenerateSecurityKey()
+        {
+            var key = new byte[32]; // 256 bits
+            using (var rng = new RNGCryptoServiceProvider())
+            {
+                rng.GetBytes(key);
+            }
+
+            return key;
+        }
+
         private string HashPassword(string password)
         {
             // In a real system, you should use a secure password hashing library like BCrypt or Identity
