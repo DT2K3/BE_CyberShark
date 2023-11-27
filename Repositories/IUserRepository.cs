@@ -10,5 +10,6 @@ namespace BE_CyberShark.Repositories
         Task<User?> GetByUsername(string username);
         Task<User?> Create(RegisterViewModel registerViewModel);
         Task<string> Login(LoginViewModel loginViewModel);
+        Task<bool> ResetPassword(string email, string newPassword);
     }
 }

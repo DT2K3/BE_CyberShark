@@ -2,6 +2,7 @@ using System.Text;
 using BE_cybershark.Models.BE_cybershark.Models;
 using BE_CyberShark.Repositories;
 using BE_CyberShark.Services;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -22,6 +23,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 
 var app = builder.Build();
 

@@ -9,5 +9,6 @@ namespace BE_CyberShark.Services
 
         //jwt String
         Task<string> Login(LoginViewModel loginViewModel);
+
     }
 }
